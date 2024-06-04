@@ -44,7 +44,7 @@ class WatsonCaptioningInstance extends InstanceBase {
         callback: async (action, context) => {
           const url = `${this.config.url}/begin_transcript`
           try {
-            await got.get(url)
+            await got.get(url, { https: { rejectUnauthorized: this.config.rejectUnauthorized } })
             this.updateStatus(InstanceStatus.Ok)
           } catch (e) {
             this.log('error', `HTTP GET Request failed (${e.message})`)
@@ -58,7 +58,7 @@ class WatsonCaptioningInstance extends InstanceBase {
         callback: async (action, context) => {
           const url = `${this.config.url}/session_close`
           try {
-            await got.get(url)
+            await got.get(url, { https: { rejectUnauthorized: this.config.rejectUnauthorized } })
             this.updateStatus(InstanceStatus.Ok)
           } catch (e) {
             this.log('error', `HTTP GET Request failed (${e.message})`)
@@ -71,6 +71,34 @@ class WatsonCaptioningInstance extends InstanceBase {
         options: [],
         callback: async (action, context) => {
           this.fetchStatus()
+        },
+      },
+      disable_captions: {
+        name: 'Mute Captions',
+        options: [],
+        callback: async (action, context) => {
+          const url = `${this.config.url}/disable_captions`
+          try {
+            await got.get(url, { https: { rejectUnauthorized: this.config.rejectUnauthorized } })
+            this.updateStatus(InstanceStatus.Ok)
+          } catch (e) {
+            this.log('error', `HTTP GET Request failed (${e.message})`)
+            this.updateStatus(InstanceStatus.UnknownError, e.code)
+          }
+        },
+      },
+      enable_captions: {
+        name: 'Unmute Captions',
+        options: [],
+        callback: async (action, context) => {
+          const url = `${this.config.url}/enable_captions`
+          try {
+            await got.get(url, { https: { rejectUnauthorized: this.config.rejectUnauthorized } })
+            this.updateStatus(InstanceStatus.Ok)
+          } catch (e) {
+            this.log('error', `HTTP GET Request failed (${e.message})`)
+            this.updateStatus(InstanceStatus.UnknownError, e.code)
+          }
         },
       },
     })
@@ -116,6 +144,21 @@ class WatsonCaptioningInstance extends InstanceBase {
           return sessionStatus === '1' // Return true if session_status is '1', otherwise false
         },
       },
+      is_output_muted: {
+        type: 'boolean',
+        name: 'Output Muted',
+        description: 'Check if the output is muted/ captioning is paused',
+        options: [],
+        defaultStyle: {
+          color: combineRgb(255, 255, 255),
+          bgcolor: combineRgb(255, 0, 0),
+        },
+        callback: (feedback) => {
+          const instanceName = this.config.label || 'watson_instance'
+          const isOutputMuted = this.getVariableValue(`${instanceName}_isOutputMuted`)
+          return isOutputMuted === '1' // Return true if isOutputMuted is '1', otherwise false
+        },
+      },
     }
 
     this.setFeedbackDefinitions(feedbacks)
@@ -134,10 +177,10 @@ class WatsonCaptioningInstance extends InstanceBase {
   async fetchStatus() {
     const url = `${this.config.url}/session_status`
     try {
-      const response = await got.get(url, { responseType: 'json' })
+      const response = await got.get(url, { https: { rejectUnauthorized: this.config.rejectUnauthorized }, responseType: 'json' })
       const statusData = response.body
 
-      //this.log('info', `Status Data: ${JSON.stringify(statusData)}`)
+      this.log('info', `Status Data: ${JSON.stringify(statusData)}`)
 
       const instanceName = this.config.label || 'watson_instance'
 
@@ -151,6 +194,7 @@ class WatsonCaptioningInstance extends InstanceBase {
 
       // Check and update feedbacks
       this.checkFeedbacks('session_status')
+      this.checkFeedbacks('is_output_muted')
 
       this.updateStatus(InstanceStatus.Ok)
     } catch (e) {

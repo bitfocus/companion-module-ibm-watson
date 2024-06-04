@@ -1,2 +1,2 @@
-# companion-module-generic-http
+# companion-module-ibm-watson
 See HELP.md and LICENSE

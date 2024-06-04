@@ -1,281 +1,163 @@
-import { InstanceBase, runEntrypoint, InstanceStatus } from '@companion-module/base'
+import { InstanceBase, runEntrypoint, InstanceStatus, combineRgb } from '@companion-module/base'
 import got from 'got'
 import { configFields } from './config.js'
 import { upgradeScripts } from './upgrade.js'
-import { FIELDS } from './fields.js'
-import JimpRaw from 'jimp'
 
-// Webpack makes a mess..
-const Jimp = JimpRaw.default || JimpRaw
+class WatsonCaptioningInstance extends InstanceBase {
+  configUpdated(config) {
+    this.config = config
 
-class GenericHttpInstance extends InstanceBase {
-	configUpdated(config) {
-		this.config = config
+    this.initActions()
+    this.initVariables()
+    this.initFeedbacks()
+    this.initPolling()
+  }
 
-		this.initActions()
-		this.initFeedbacks()
-	}
+  init(config) {
+    this.config = config
 
-	init(config) {
-		this.config = config
+    this.updateStatus(InstanceStatus.Ok)
 
-		this.updateStatus(InstanceStatus.Ok)
+    this.initActions()
+    this.initVariables()
+    this.initFeedbacks()
+    this.initPolling()
+  }
 
-		this.initActions()
-		this.initFeedbacks()
-	}
+  // Return config fields for web config
+  getConfigFields() {
+    return configFields
+  }
 
-	// Return config fields for web config
-	getConfigFields() {
-		return configFields
-	}
+  // When module gets deleted
+  async destroy() {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval)
+    }
+  }
 
-	// When module gets deleted
-	async destroy() {
-		// Stop any running feedback timers
-		for (const timer of Object.values(this.feedbackTimers)) {
-			clearInterval(timer)
-		}
-	}
+  initActions() {
+    this.setActionDefinitions({
+      start_captioning: {
+        name: 'Start Captioning',
+        options: [],
+        callback: async (action, context) => {
+          const url = `${this.config.url}/begin_transcript`
+          try {
+            await got.get(url)
+            this.updateStatus(InstanceStatus.Ok)
+          } catch (e) {
+            this.log('error', `HTTP GET Request failed (${e.message})`)
+            this.updateStatus(InstanceStatus.UnknownError, e.code)
+          }
+        },
+      },
+      end_captioning: {
+        name: 'End Captioning',
+        options: [],
+        callback: async (action, context) => {
+          const url = `${this.config.url}/session_close`
+          try {
+            await got.get(url)
+            this.updateStatus(InstanceStatus.Ok)
+          } catch (e) {
+            this.log('error', `HTTP GET Request failed (${e.message})`)
+            this.updateStatus(InstanceStatus.UnknownError, e.code)
+          }
+        },
+      },
+      fetch_status: {
+        name: 'Fetch Status',
+        options: [],
+        callback: async (action, context) => {
+          this.fetchStatus()
+        },
+      },
+    })
+  }
 
-	async prepareQuery(context, action, includeBody) {
-		let url = await context.parseVariablesInString(action.options.url || '')
-		if (url.substring(0, 4) !== 'http') {
-			if (this.config.prefix && this.config.prefix.length > 0) {
-				url = `${this.config.prefix}${url.trim()}`
-			}
-		}
+  initVariables() {
+    const instanceName = this.config.label || 'watson_instance'
 
-		let body = {}
-		if (includeBody && action.options.body && action.options.body.trim() !== '') {
-			body = await context.parseVariablesInString(action.options.body || '')
+    // Define initial variables (optional)
+    const variableDefinitions = [
+      { variableId: `${instanceName}_session_status`, name: 'Session Status' },
+      { variableId: `${instanceName}_hold_status`, name: 'Hold Status' },
+      { variableId: `${instanceName}_audioValues`, name: 'Audio Values' },
+      { variableId: `${instanceName}_isOutputMuted`, name: 'Is Output Muted' },
+      { variableId: `${instanceName}_playingFileName`, name: 'Playing File Name' },
+      { variableId: `${instanceName}_playingStarted`, name: 'Playing Started' },
+      { variableId: `${instanceName}_playingAudioOnly`, name: 'Playing Audio Only' },
+      { variableId: `${instanceName}_playingTotalFrames`, name: 'Playing Total Frames' },
+      { variableId: `${instanceName}_playingRunningFrame`, name: 'Playing Running Frame' },
+      { variableId: `${instanceName}_playingFPS`, name: 'Playing FPS' },
+      { variableId: `${instanceName}_playingStartTime`, name: 'Playing Start Time' },
+      { variableId: `${instanceName}_playingName`, name: 'Playing Name' },
+    ]
 
-			if (action.options.contenttype === 'application/json') {
-				//only parse the body if we are explicitly sending application/json
-				try {
-					body = JSON.parse(body)
-				} catch (e) {
-					this.log('error', `HTTP ${action.actionId.toUpperCase()} Request aborted: Malformed JSON Body (${e.message})`)
-					this.updateStatus(InstanceStatus.UnknownError, e.message)
-					return
-				}
-			}
-		}
+    // Register variable definitions
+    this.setVariableDefinitions(variableDefinitions)
+  }
 
-		let headers = {}
-		if (action.options.header.trim() !== '') {
-			const headersStr = await context.parseVariablesInString(action.options.header || '')
+  initFeedbacks() {
+    const feedbacks = {
+      session_status: {
+        type: 'boolean',
+        name: 'Session Status',
+        description: 'Check if the session status indicates captioning is active',
+        options: [],
+        defaultStyle: {
+          color: combineRgb(255, 255, 255),
+          bgcolor: combineRgb(0, 204, 0),
+        },
+        callback: (feedback) => {
+          const instanceName = this.config.label || 'watson_instance'
+          const sessionStatus = this.getVariableValue(`${instanceName}_session_status`)
+          return sessionStatus === '1' // Return true if session_status is '1', otherwise false
+        },
+      },
+    }
 
-			try {
-				headers = JSON.parse(headersStr)
-			} catch (e) {
-				this.log('error', `HTTP ${action.actionId.toUpperCase()} Request aborted: Malformed JSON Header (${e.message})`)
-				this.updateStatus(InstanceStatus.UnknownError, e.message)
-				return
-			}
-		}
+    this.setFeedbackDefinitions(feedbacks)
+  }
 
-		if (includeBody && action.options.contenttype) {
-			headers['Content-Type'] = action.options.contenttype
-		}
+  initPolling() {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval)
+    }
 
-		const options = {
-			https: {
-				rejectUnauthorized: this.config.rejectUnauthorized,
-			},
+    this.pollingInterval = setInterval(() => {
+      this.fetchStatus()
+    }, 1000)
+  }
 
-			headers,
-		}
+  async fetchStatus() {
+    const url = `${this.config.url}/session_status`
+    try {
+      const response = await got.get(url, { responseType: 'json' })
+      const statusData = response.body
 
-		if (includeBody) {
-			if (typeof body === 'string') {
-				body = body.replace(/\\n/g, '\n')
-				options.body = body
-			} else if (body) {
-				options.json = body
-			}
-		}
+      //this.log('info', `Status Data: ${JSON.stringify(statusData)}`)
 
-		return {
-			url,
-			options,
-		}
-	}
+      const instanceName = this.config.label || 'watson_instance'
 
-	initActions() {
-		const urlLabel = this.config.prefix ? 'URI' : 'URL'
+      // Dynamically update custom variables with the instance name
+      const variables = {}
+      for (const [key, value] of Object.entries(statusData)) {
+        const variableName = `${instanceName}_${key}`
+        variables[variableName] = value
+      }
+      this.setVariableValues(variables)
 
-		this.setActionDefinitions({
-			post: {
-				name: 'POST',
-				options: [FIELDS.Url(urlLabel), FIELDS.Body, FIELDS.Header, FIELDS.ContentType],
-				callback: async (action, context) => {
-					const { url, options } = await this.prepareQuery(context, action, true)
+      // Check and update feedbacks
+      this.checkFeedbacks('session_status')
 
-					try {
-						await got.post(url, options)
-
-						this.updateStatus(InstanceStatus.Ok)
-					} catch (e) {
-						this.log('error', `HTTP POST Request failed (${e.message})`)
-						this.updateStatus(InstanceStatus.UnknownError, e.code)
-					}
-				},
-			},
-			get: {
-				name: 'GET',
-				options: [
-					FIELDS.Url(urlLabel),
-					FIELDS.Header,
-					{
-						type: 'custom-variable',
-						label: 'JSON Response Data Variable',
-						id: 'jsonResultDataVariable',
-					},
-					{
-						type: 'checkbox',
-						label: 'JSON Stringify Result',
-						id: 'result_stringify',
-						default: true,
-					},
-				],
-				callback: async (action, context) => {
-					const { url, options } = await this.prepareQuery(context, action, false)
-
-					try {
-						const response = await got.get(url, options)
-
-						// store json result data into retrieved dedicated custom variable
-						const jsonResultDataVariable = action.options.jsonResultDataVariable
-						if (jsonResultDataVariable) {
-							this.log('debug', `Writing result to ${jsonResultDataVariable}`)
-
-							let resultData = response.body
-
-							if (!action.options.result_stringify) {
-								try {
-									resultData = JSON.parse(resultData)
-								} catch (error) {
-									//error stringifying
-								}
-							}
-
-							this.setCustomVariableValue(jsonResultDataVariable, resultData)
-						}
-
-						this.updateStatus(InstanceStatus.Ok)
-					} catch (e) {
-						this.log('error', `HTTP GET Request failed (${e.message})`)
-						this.updateStatus(InstanceStatus.UnknownError, e.code)
-					}
-				},
-			},
-			put: {
-				name: 'PUT',
-				options: [FIELDS.Url(urlLabel), FIELDS.Body, FIELDS.Header, FIELDS.ContentType],
-				callback: async (action, context) => {
-					const { url, options } = await this.prepareQuery(context, action, true)
-
-					try {
-						await got.put(url, options)
-
-						this.updateStatus(InstanceStatus.Ok)
-					} catch (e) {
-						this.log('error', `HTTP PUT Request failed (${e.message})`)
-						this.updateStatus(InstanceStatus.UnknownError, e.code)
-					}
-				},
-			},
-			patch: {
-				name: 'PATCH',
-				options: [FIELDS.Url(urlLabel), FIELDS.Body, FIELDS.Header, FIELDS.ContentType],
-				callback: async (action, context) => {
-					const { url, options } = await this.prepareQuery(context, action, true)
-
-					try {
-						await got.patch(url, options)
-
-						this.updateStatus(InstanceStatus.Ok)
-					} catch (e) {
-						this.log('error', `HTTP PATCH Request failed (${e.message})`)
-						this.updateStatus(InstanceStatus.UnknownError, e.code)
-					}
-				},
-			},
-			delete: {
-				name: 'DELETE',
-				options: [FIELDS.Url(urlLabel), FIELDS.Body, FIELDS.Header],
-				callback: async (action, context) => {
-					const { url, options } = await this.prepareQuery(context, action, true)
-
-					try {
-						await got.delete(url, options)
-
-						this.updateStatus(InstanceStatus.Ok)
-					} catch (e) {
-						this.log('error', `HTTP DELETE Request failed (${e.message})`)
-						this.updateStatus(InstanceStatus.UnknownError, e.code)
-					}
-				},
-			},
-		})
-	}
-
-	feedbackTimers = {}
-
-	initFeedbacks() {
-		const urlLabel = this.config.prefix ? 'URI' : 'URL'
-
-		this.setFeedbackDefinitions({
-			imageFromUrl: {
-				type: 'advanced',
-				name: 'Image from URL',
-				options: [FIELDS.Url(urlLabel), FIELDS.Header, FIELDS.PollInterval],
-				subscribe: (feedback) => {
-					// Ensure existing timer is cleared
-					if (this.feedbackTimers[feedback.id]) {
-						clearInterval(this.feedbackTimers[feedback.id])
-						delete this.feedbackTimers[feedback.id]
-					}
-
-					// Start new timer if needed
-					if (feedback.options.interval) {
-						this.feedbackTimers[feedback.id] = setInterval(() => {
-							this.checkFeedbacksById(feedback.id)
-						}, feedback.options.interval)
-					}
-				},
-				unsubscribe: (feedback) => {
-					// Ensure timer is cleared
-					if (this.feedbackTimers[feedback.id]) {
-						clearInterval(this.feedbackTimers[feedback.id])
-						delete this.feedbackTimers[feedback.id]
-					}
-				},
-				callback: async (feedback, context) => {
-					try {
-						const { url, options } = await this.prepareQuery(context, feedback, false)
-
-						const res = await got.get(url, options)
-
-						// Scale image to a sensible size
-						const img = await Jimp.read(res.rawBody)
-						const png64 = await img
-							.scaleToFit(feedback.image?.width ?? 72, feedback.image?.height ?? 72)
-							.getBase64Async('image/png')
-
-						return {
-							png64,
-						}
-					} catch (e) {
-						// Image failed to load so log it and output nothing
-						this.log('error', `Failed to fetch image: ${e}`)
-						return {}
-					}
-				},
-			},
-		})
-	}
+      this.updateStatus(InstanceStatus.Ok)
+    } catch (e) {
+      this.log('error', `HTTP GET Request for status failed (${e.message})`)
+      this.updateStatus(InstanceStatus.UnknownError, e.code)
+    }
+  }
 }
 
-runEntrypoint(GenericHttpInstance, upgradeScripts)
+runEntrypoint(WatsonCaptioningInstance, upgradeScripts)

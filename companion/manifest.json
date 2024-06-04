@@ -1,28 +1,16 @@
 {
-	"id": "generic-http",
-	"name": "generic-http",
-	"shortname": "http",
-	"description": "generic-http",
-	"version": "0.0.0",
+	"id": "ibm-watson",
+	"name": "ibm-watson",
+	"shortname": "watson",
+	"description": "ibm-watson closed captioning controller",
+	"version": "0.0.1",
 	"license": "MIT",
-	"repository": "git+https://github.com/bitfocus/companion-module-generic-http.git",
-	"bugs": "https://github.com/bitfocus/companion-module-generic-http/issues",
+	"repository": "git+https://github.com/InertiaImpact/companion-module-ibm-watson.git",
+	"bugs": "https://github.com/InertiaImpact/companion-module-ibm-watson/issues",
 	"maintainers": [
 		{
-			"name": "William Viker",
-			"email": "william@bitfocus.io"
-		},
-		{
-			"name": "Keith Rocheck",
-			"email": "keith.rocheck@gmail.com"
-		},
-		{
-			"name": "Jeffrey Davidsz",
-			"email": "jeffrey.davidsz@vicreo.eu"
-		},
-		{
-			"name": "Joseph Adams",
-			"email": "josephdadams@gmail.com"
+			"name": "Brent Sancken",
+			"email": "bsancken@gmail.com"
 		}
 	],
 	"legacyIds": [],
@@ -32,12 +20,12 @@
 		"apiVersion": "0.0.0",
 		"entrypoint": "../index.js"
 	},
-	"manufacturer": "Generic",
+	"manufacturer": "IBM",
 	"products": [
-		"HTTP Requests"
+		"Watson"
 	],
 	"keywords": [
-		"Protocol",
-		"Generic"
+		"Watson",
+		"captioning"
 	]
 }

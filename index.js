@@ -180,7 +180,7 @@ class WatsonCaptioningInstance extends InstanceBase {
       const response = await got.get(url, { https: { rejectUnauthorized: this.config.rejectUnauthorized }, responseType: 'json' })
       const statusData = response.body
 
-      this.log('info', `Status Data: ${JSON.stringify(statusData)}`)
+      //this.log('info', `Status Data: ${JSON.stringify(statusData)}`)
 
       const instanceName = this.config.label || 'watson_instance'
 

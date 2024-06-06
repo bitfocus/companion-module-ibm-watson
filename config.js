@@ -7,7 +7,7 @@ export const configFields = [
     width: 12,
     label: 'Information',
     value:
-      "<strong>PLEASE READ THIS!</strong> This module is intended for use with IBM Watson for captioning. If you use this module to control a device or software that is widely used, <strong>PLEASE let us know</strong> about this software, so we can create a proper module for it. If you use this module to trigger a feature that our existing modules do not support, please let us know. We want Companion to be as easy as possible to use for everyone.<br /><br />Use the 'Base URL' field below to define the starting URL for the instance's commands: e.g., 'http://server.url/path/'. <b>This field will be ignored if a command uses a full URL.</b>",
+      "<strong>PLEASE READ THIS!</strong> This module is intended for use with IBM Watson for captioning. <br /><br />Use the 'Base URL' field below to define the path to the Watson server for the instance's commands: e.g., 'http://server.url/path/'. ",
   },
   {
     type: 'textinput',
@@ -16,6 +16,16 @@ export const configFields = [
     width: 6,
     default: 'http://example.com',
     regex: Regex.URL,
+  },
+  {
+    type: 'number',
+    id: 'pollInterval',
+    label: 'Status Poll Interval (seconds)',
+    width: 6,
+    default: 2,
+    min: 1,
+    max: 3600,
+    regex: Regex.NUMBER,
   },
   {
     type: 'static-text',

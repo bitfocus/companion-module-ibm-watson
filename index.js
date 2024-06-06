@@ -1,4 +1,4 @@
-import { InstanceBase, runEntrypoint, InstanceStatus, combineRgb } from '@companion-module/base'
+import { InstanceBase, runEntrypoint, InstanceStatus, combineRgb, Regex } from '@companion-module/base'
 import got from 'got'
 import { configFields } from './config.js'
 import { upgradeScripts } from './upgrade.js'
@@ -147,7 +147,7 @@ class WatsonCaptioningInstance extends InstanceBase {
       is_output_muted: {
         type: 'boolean',
         name: 'Output Muted',
-        description: 'Check if the output is muted/ captioning is paused',
+        description: 'Check if the output is muted',
         options: [],
         defaultStyle: {
           color: combineRgb(255, 255, 255),
@@ -169,18 +169,26 @@ class WatsonCaptioningInstance extends InstanceBase {
       clearInterval(this.pollingInterval)
     }
 
-    this.pollingInterval = setInterval(() => {
-      this.fetchStatus()
-    }, 1000)
+    if (this.config.url && this.config.url !== 'http://example.com' && this.config.pollInterval > 0) {
+      this.pollingInterval = setInterval(() => {
+        this.fetchStatus()
+      }, this.config.pollInterval * 1000)
+    }
   }
 
   async fetchStatus() {
+    if (!this.config.url || this.config.url === 'http://example.com') {
+      this.log('error', 'Base URL is not set or is the default value')
+      this.updateStatus(InstanceStatus.BadConfig, 'No URL')
+      return
+    }
+
     const url = `${this.config.url}/session_status`
     try {
       const response = await got.get(url, { https: { rejectUnauthorized: this.config.rejectUnauthorized }, responseType: 'json' })
       const statusData = response.body
 
-      //this.log('info', `Status Data: ${JSON.stringify(statusData)}`)
+      this.log('info', `Status Data: ${JSON.stringify(statusData)}`)
 
       const instanceName = this.config.label || 'watson_instance'
 

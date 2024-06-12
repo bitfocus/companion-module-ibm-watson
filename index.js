@@ -1,4 +1,4 @@
-import { InstanceBase, runEntrypoint, InstanceStatus, combineRgb, Regex } from '@companion-module/base'
+import { InstanceBase, runEntrypoint, InstanceStatus, combineRgb } from '@companion-module/base'
 import got from 'got'
 import { configFields } from './config.js'
 import { upgradeScripts } from './upgrade.js'
@@ -101,7 +101,41 @@ class WatsonCaptioningInstance extends InstanceBase {
           }
         },
       },
+      toggle_captioning_state: {
+        name: 'Toggle Captioning State',
+        options: [],
+        callback: async (action, context) => {
+          await this.toggleCaptioningState()
+        },
+      },
     })
+  }
+
+  async toggleCaptioningState() {
+    const instanceName = this.config.label || 'watson_instance'
+    const sessionStatus = this.getVariableValue(`${instanceName}_session_status`)
+
+    if (sessionStatus === '1') {
+      // If captioning is active, stop it
+      const url = `${this.config.url}/session_close`
+      try {
+        await got.get(url, { https: { rejectUnauthorized: this.config.rejectUnauthorized } })
+        this.updateStatus(InstanceStatus.Ok)
+      } catch (e) {
+        this.log('error', `HTTP GET Request failed (${e.message})`)
+        this.updateStatus(InstanceStatus.UnknownError, e.code)
+      }
+    } else {
+      // If captioning is not active, start it
+      const url = `${this.config.url}/begin_transcript`
+      try {
+        await got.get(url, { https: { rejectUnauthorized: this.config.rejectUnauthorized } })
+        this.updateStatus(InstanceStatus.Ok)
+      } catch (e) {
+        this.log('error', `HTTP GET Request failed (${e.message})`)
+        this.updateStatus(InstanceStatus.UnknownError, e.code)
+      }
+    }
   }
 
   initVariables() {

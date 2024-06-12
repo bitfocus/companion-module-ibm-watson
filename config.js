@@ -7,7 +7,7 @@ export const configFields = [
     width: 12,
     label: 'Information',
     value:
-      "<strong>PLEASE READ THIS!</strong> This module is intended for use with IBM Watson for captioning. <br /><br />Use the 'Base URL' field below to define the path to the Watson server for the instance's commands: e.g., 'http://server.url/path/'. ",
+      "<strong>PLEASE READ THIS!</strong> This module is intended for use with IBM Watson for captioning. <br /><br />Use the 'Base URL' field below to define the path to the Watson server for the instance's commands: e.g., 'http://server.url/path/:8000'. <br />The default port appears to be 8000 for remote control commands and port 8080 for web interface.<br /> ",
   },
   {
     type: 'textinput',

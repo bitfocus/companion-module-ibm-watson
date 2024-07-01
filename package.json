@@ -1,6 +1,6 @@
 {
 	"name": "ibm-watson",
-	"version": "2.1.6",
+	"version": "1.0.0",
 	"main": "index.js",
 	"type": "module",
 	"scripts": {
@@ -8,7 +8,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/bitfocus/companion-module-generic-http.git"
+		"url": "git+https://github.com/bitfocus/companion-module-ibm-watson.git"
 	},
 	"license": "MIT",
 	"dependencies": {

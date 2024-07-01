@@ -3,7 +3,7 @@
 	"name": "ibm-watson",
 	"shortname": "watson",
 	"description": "ibm-watson closed captioning controller",
-	"version": "0.0.1",
+	"version": "1.0.0",
 	"license": "MIT",
 	"repository": "git+https://github.com/InertiaImpact/companion-module-ibm-watson.git",
 	"bugs": "https://github.com/InertiaImpact/companion-module-ibm-watson/issues",

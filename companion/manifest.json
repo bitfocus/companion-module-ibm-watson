@@ -1,0 +1,31 @@
+{
+	"id": "ibm-watson",
+	"name": "ibm-watson",
+	"shortname": "watson",
+	"description": "ibm-watson closed captioning controller",
+	"version": "0.0.1",
+	"license": "MIT",
+	"repository": "git+https://github.com/InertiaImpact/companion-module-ibm-watson.git",
+	"bugs": "https://github.com/InertiaImpact/companion-module-ibm-watson/issues",
+	"maintainers": [
+		{
+			"name": "Brent Sancken",
+			"email": "bsancken@gmail.com"
+		}
+	],
+	"legacyIds": [],
+	"runtime": {
+		"type": "node18",
+		"api": "nodejs-ipc",
+		"apiVersion": "0.0.0",
+		"entrypoint": "../index.js"
+	},
+	"manufacturer": "IBM",
+	"products": [
+		"Watson"
+	],
+	"keywords": [
+		"Watson",
+		"captioning"
+	]
+}

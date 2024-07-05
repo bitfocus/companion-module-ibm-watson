@@ -3,14 +3,14 @@
 	"name": "ibm-watson",
 	"shortname": "watson",
 	"description": "ibm-watson closed captioning controller",
-	"version": "0.0.1",
+	"version": "1.0.1",
 	"license": "MIT",
-	"repository": "git+https://github.com/InertiaImpact/companion-module-ibm-watson.git",
-	"bugs": "https://github.com/InertiaImpact/companion-module-ibm-watson/issues",
+	"repository": "git+https://github.com/bitfocus/companion-module-ibm-watson.git",
+	"bugs": "https://github.com/bitfocus/companion-module-ibm-watson/issues",
 	"maintainers": [
 		{
-			"name": "Brent Sancken",
-			"email": "bsancken@gmail.com"
+			"name": "InertiaImpact",
+			"email": "InertiaImpactGithub@gmail.com"
 		}
 	],
 	"legacyIds": [],

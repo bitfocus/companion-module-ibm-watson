@@ -1,11 +1,19 @@
-## Generic HTTP Requests Module
+# companion-module-ibm-watson
+This module is for controlling your IBM Watson live closed captioning system. 
 
-Generic modules is only for use with custom applications. If you use this module to control a device or software on the market that more than you are using, <strong>PLEASE let us know</strong> about this software, so we can make a proper module for it. If we already support this and you use this to trigger a feature our module doesnt support, please let us know. We want companion to be as easy as possible to use for anyone.
+This was built by reverse engineering the calls sent from the web interface that is normally used to control the system.
+system.address:8080 is your webpage and system.address:8000 is your http control port.
+
+There are some presets avaliable, I prefer the toggle option with the built in feedback showing if it is captioning or is not captioning. (green, red, repsectivly) 
+
+See LICENSE
+
 
 **Available commands**
 
-* POST
-* GET
-* PUT
-* PATCH
-* DELETE
+* Start Captioning
+* Stop Captioning
+* Toggle Captioning
+* Fetch Status
+* Mute Captions
+* Unmute Captions

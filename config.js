@@ -7,7 +7,7 @@ export const configFields = [
 		width: 12,
 		label: 'Information',
 		value:
-			"This module is intended for use with IBM Watson for controling and seeing the state of the closed captioning service. <br /><br />Use the 'Watson server address' field below to define the starting URL for the instance's commands: e.g., 'http://server.url:8000'.",
+			"This module is intended for use with IBM Watson for controling and seeing the state of the closed captioning service. <br /><br />Use the 'Watson server address' field below to define the starting URL for the instance's commands: e.g., 'http://server.url:8000'. <br><br> If your normal control web page ends in :8080, copy that whole address, paste it into the \"Watson server address\" box and change the 8080 to 8000.",
 	},
 	{
 		type: 'textinput',

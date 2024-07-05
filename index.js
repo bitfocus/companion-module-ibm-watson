@@ -6,21 +6,20 @@ import { upgradeScripts } from './upgrade.js'
 class WatsonCaptioningInstance extends InstanceBase {
   configUpdated(config) {
     this.config = config
-
     this.initActions()
     this.initVariables()
     this.initFeedbacks()
+    this.initPresets()
     this.initPolling()
   }
 
   init(config) {
     this.config = config
-
     this.updateStatus(InstanceStatus.Ok)
-
     this.initActions()
     this.initVariables()
     this.initFeedbacks()
+    this.initPresets()
     this.initPolling()
   }
 
@@ -44,7 +43,7 @@ class WatsonCaptioningInstance extends InstanceBase {
         callback: async (action, context) => {
           const url = `${this.config.url}/begin_transcript`
           try {
-            await got.get(url)
+            await got.get(await got.get(url, { https: { rejectUnauthorized: this.config.rejectUnauthorized } }))
             this.updateStatus(InstanceStatus.Ok)
           } catch (e) {
             this.log('error', `HTTP GET Request failed (${e.message})`)
@@ -58,7 +57,7 @@ class WatsonCaptioningInstance extends InstanceBase {
         callback: async (action, context) => {
           const url = `${this.config.url}/session_close`
           try {
-            await got.get(url)
+            await got.get(await got.get(url, { https: { rejectUnauthorized: this.config.rejectUnauthorized } }))
             this.updateStatus(InstanceStatus.Ok)
           } catch (e) {
             this.log('error', `HTTP GET Request failed (${e.message})`)
@@ -119,6 +118,77 @@ class WatsonCaptioningInstance extends InstanceBase {
     }
 
     this.setFeedbackDefinitions(feedbacks)
+  }
+
+  initPresets() {
+    this.setPresetDefinitions({
+      startCaptioning: {
+        type: 'button',
+        category: 'Control',
+        name: 'Start Captioning',
+        style: {
+          text: 'Start Captioning',
+          size: '14',
+          color: 'white',
+          bgcolor: combineRgb(0, 204, 0),
+        },
+        steps: [
+          {
+            down: [
+              {
+                actionId: 'start_captioning',
+                options: {},
+              },
+            ],
+            up: [],
+          },
+        ],
+      },
+      endCaptioning: {
+        type: 'button',
+        category: 'Control',
+        name: 'End Captioning',
+        style: {
+          text: 'End Captioning',
+          size: '14',
+          color: 'white',
+          bgcolor: combineRgb(204, 0, 0),
+        },
+        steps: [
+          {
+            down: [
+              {
+                actionId: 'end_captioning',
+                options: {},
+              },
+            ],
+            up: [],
+          },
+        ],
+      },
+      fetchStatus: {
+        type: 'button',
+        category: 'Control',
+        name: 'Fetch Status',
+        style: {
+          text: 'Fetch Status',
+          size: '14',
+          color: 'white',
+          bgcolor: combineRgb(0, 0, 204),
+        },
+        steps: [
+          {
+            down: [
+              {
+                actionId: 'fetch_status',
+                options: {},
+              },
+            ],
+            up: [],
+          },
+        ],
+      },
+    })
   }
 
   initPolling() {

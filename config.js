@@ -17,6 +17,17 @@ export const configFields = [
 		default: 'http://example.com:8000',
 		regex: Regex.URL,
 	},
+	
+	{
+		type: 'number',
+		id: 'pollInterval',
+		label: 'Status Poll Interval (seconds)',
+		width: 6,
+		default: 2,
+		min: 1,
+		max: 3600,
+		regex: Regex.NUMBER,
+	  },
 	{
 		type: 'static-text',
 		id: 'rejectUnauthorizedInfo',
